@@ -1,4 +1,3 @@
-
 const express = require('express');
 const router = express.Router();
 
@@ -21,32 +20,39 @@ function RegisterUserIfNotExist(req, res) {
     username: _username
   }).exec((err, user) => {
     if (err) {
-      res.status(500).send({ message: err });
-      process.exit(0);
+      res.status(500).send({
+        message: err
+      });
+      return;
     }
 
     /*Check if user exist*/
     if (user) {
-      res.status(400).json("Username already taken");
-      process.exit(0);
+      res.status(400).send("User Already Exist");
+      return;
+    } else {
+      new User({
+        username: _username,
+        password: _password
+      }).save().then(() => {
+        res.status(200).json("You've created your account successfully");
+        return;
+
+      }).catch((err) => {
+        res.send("Something went wrong");
+
+      });
     }
   });
 
   /* Create User */
-  new User({
-    username: _username,
-    password: _password
-  }).save().then(() => {
-    res.status(200).json("You've created your account successfully");
-  }).catch((err) => {
-    res.status(500).send("Something went wrong");
-  });
+
 }
 
 /**
  * Post method
  */
-router.post('/',RegisterUserIfNotExist);
+router.post('/', RegisterUserIfNotExist);
 
 
 module.exports = router;

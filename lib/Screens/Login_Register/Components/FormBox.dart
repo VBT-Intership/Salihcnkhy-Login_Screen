@@ -10,7 +10,7 @@ class FormBox extends StatelessWidget {
     return Container(
       decoration: buildBoxDecoration(),
       width: size.width * 0.9,
-      height: size.height * 0.65,
+      height: size.height * 0.75,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: childs,

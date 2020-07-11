@@ -40,13 +40,16 @@ function CheckUsernameAndPassword(req, res) {
       }
       return;
     } else {
-      res.status(402).json({
+      res.status(404).json({
         "Status": "User not found."
       });
 
     }
   });
 }
+router.get('/',(req,res)=> {
+  console.log("get");
+})
 
 /**
  * Post method

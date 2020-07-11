@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 
 class RoundedButton extends StatelessWidget {
-  final String buttonText;
   final Function onTap;
-  const RoundedButton({Key key, this.buttonText, this.onTap}) : super(key: key);
+  final Widget child;
+  const RoundedButton({Key key, this.onTap, this.child})
+      : super(key: key);
   @override
   Widget build(BuildContext context) {
     Size size = MediaQuery.of(context).size;
@@ -12,7 +13,7 @@ class RoundedButton extends StatelessWidget {
         borderRadius: BorderRadius.circular(15),
         child: FlatButton(
           onPressed: onTap,
-          child: Text(buttonText),
+          child: child,
         ),
       ),
       margin: EdgeInsets.only(top: 15),

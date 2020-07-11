@@ -22,7 +22,7 @@ app.use("/register",registerRouter);
 
 
 //Start listen
-app.listen(3000,function () {
+app.listen(3000,"192.168.1.104",function () {
     console.log("dinliyor");
 });
 
