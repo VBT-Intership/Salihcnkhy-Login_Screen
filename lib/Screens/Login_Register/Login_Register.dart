@@ -27,13 +27,13 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
       ..addListener(() {
         setState(() {});
       });
-    smallSizeAnimation = Tween<double>(begin: 35, end: 50).animate(
+    smallSizeAnimation = Tween<double>(begin: 30, end: 45).animate(
         CurvedAnimation(
             parent: sizeAnimateController, curve: Curves.linearToEaseOut))
       ..addListener(() {
         setState(() {});
       });
-    bigSizeAnimation = Tween<double>(begin: 50, end: 35).animate(
+    bigSizeAnimation = Tween<double>(begin: 45, end: 30).animate(
         CurvedAnimation(
             parent: sizeAnimateController, curve: Curves.linearToEaseOut))
       ..addListener(() {
@@ -48,6 +48,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
     double offsetX =
         moveAnimation.value > -size.width ? moveAnimation.value : -size.width;
     return Scaffold(
+      
       appBar: buildAppBar(size),
       body: buildBody(offsetX),
     );

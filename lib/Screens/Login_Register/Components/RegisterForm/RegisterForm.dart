@@ -2,6 +2,7 @@ import 'dart:math';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:login_screen/Core/Task.dart';
 import 'package:login_screen/Screens/Home/home.dart';
 import 'package:login_screen/Screens/Login_Register/Components/CircularLogoContainer.dart';
 import 'package:login_screen/Screens/Login_Register/Components/FormBox.dart';
@@ -37,125 +38,150 @@ class _RegisterFormState extends State<RegisterForm> {
         autovalidate: isAutoValidate,
         key: _formKey,
         child: Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: FormBox(
-              childs: <Widget>[
-                Stack(
-                  children: <Widget>[
-                    Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: <Widget>[
-                          CircularLogoContainer(),
-                          RoundedEmailTextField(
-                            emailController: emailController,
-                            hintText: "Your Email",
-                          ),
-                          RoundedPasswordTextField(
-                            pwController: pwController,
-                            hintText: "Password",
-                          ),
-                          RoundedPasswordTextField(
-                            pwController: pwConfController,
-                            hintText: "Confirm Password",
-                          ),
-                          RoundedButton(
-                              child: Text("REGISTER"),
-                              onTap: _registerFuture == null
-                                  ? () {
-                                      setState(() {
-                                        isAutoValidate = true;
-                                        if (_formKey.currentState.validate()) {
-                                          if (pwConfController.text ==
-                                              pwController.text) {
-                                            _registerFuture = tryRegister(
-                                                emailController.text,
-                                                pwController.text);
-                                          }
-                                        }
-                                      });
-                                    }
-                                  : null)
-                        ],
-                      ),
-                    ),
-                    if (_registerFuture != null)
-                      Center(
-                        child: Container(
-                          width: MediaQuery.of(context).size.width,
-                          height: MediaQuery.of(context).size.height / 2,
-                          child: BackdropFilter(
-                            filter: ImageFilter.blur(sigmaX: 2, sigmaY: 2),
-                            child: FutureBuilder<bool>(
-                              future: _registerFuture.then((value) {
-                                if (value && !isReturned) {
-                                  Navigator.pushAndRemoveUntil(
-                                      context,
-                                      MaterialPageRoute(
-                                          builder: (BuildContext context) =>
-                                              HomePage()),
-                                      (route) => false);
-                                } else {
-                                  isReturned = false;
-
-                                  showDialog(
-                                      context: context,
-                                      builder: (_) => AlertDialog(
-                                            title: Text("Something Went Wrong"),
-                                            content: Text(
-                                                "Username is already exist"),
-                                            elevation: 20,
-                                            shape: RoundedRectangleBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(12),
-                                                side: BorderSide(
-                                                    width: 0.1,
-                                                    color: Colors.white)),
-                                          ),
-                                      barrierDismissible: true);
-                                  setState(() {
-                                    _registerFuture = null;
-                                  });
-                                }
-                                return value;
-                              }),
-                              builder: (context, snapshot) {
-                                if (snapshot.hasData) {
-                                  isReturned = true;
-                                  return Container();
-                                } else if (snapshot.hasError) {
-                                  return Text("${snapshot.error}");
-                                }
-                                return Center(
-                                    child: CircularProgressIndicator());
-                              },
-                            ),
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ],
-            )),
+            padding: const EdgeInsets.all(20.0), child: buildFormBox(context)),
       ),
     );
   }
 
-  Future<bool> tryRegister(String username, String password) async {
-    final http.Response response = await http.post(
-      'http://192.168.1.104:3000/register',
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
-      body: jsonEncode(
-          <String, String>{'username': username, 'password': password}),
+  FormBox buildFormBox(BuildContext context) {
+    return FormBox(
+      childs: <Widget>[
+        buildFormBoxStack(context),
+      ],
     );
+  }
 
-    if (response.statusCode == 200) {
-      return true;
+  Stack buildFormBoxStack(BuildContext context) {
+    return Stack(
+      children: <Widget>[
+        Center(
+          child: buildEmailPasswordWithConfirmAndRegisterButton(),
+        ),
+        if (_registerFuture != null)
+          buildBackDropFilterAndFutureBuilderContainer(context),
+      ],
+    );
+  }
+
+  Center buildBackDropFilterAndFutureBuilderContainer(BuildContext context) {
+    return Center(
+      child: Container(
+        width: MediaQuery.of(context).size.width,
+        height: MediaQuery.of(context).size.height / 2,
+        child: buildBackdropFilter(context),
+      ),
+    );
+  }
+
+  BackdropFilter buildBackdropFilter(BuildContext context) {
+    return BackdropFilter(
+      filter: ImageFilter.blur(sigmaX: 2, sigmaY: 2),
+      child: buildFutureBuilder(context),
+    );
+  }
+
+  FutureBuilder<bool> buildFutureBuilder(BuildContext context) {
+    return FutureBuilder<bool>(
+      future: _registerFuture.then((value) {
+        checkRegisterSuccessIfNotShowDialog(value, context);
+        return value;
+      }).catchError((err) {
+        serverDoesntResponseAlert(context);
+      }),
+      builder: (context, snapshot) {
+        if (snapshot.hasData) {
+          isReturned = true;
+          return Container();
+        } else if (snapshot.hasError) {
+          return Text("${snapshot.error}");
+        }
+        return Center(child: CircularProgressIndicator());
+      },
+    );
+  }
+
+  void checkRegisterSuccessIfNotShowDialog(bool value, BuildContext context) {
+    if (value && !isReturned) {
+      Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (BuildContext context) => HomePage()),
+          (route) => false);
     } else {
-      return false;
+      isReturned = false;
+
+      showDialog(
+          context: context,
+          builder: (_) => AlertDialog(
+                title: Text("Something Went Wrong"),
+                content: Text("Username is already exist"),
+                elevation: 20,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    side: BorderSide(width: 0.1, color: Colors.white)),
+              ),
+          barrierDismissible: true);
+      setState(() {
+        _registerFuture = null;
+      });
     }
+  }
+
+  void serverDoesntResponseAlert(BuildContext context) {
+    showDialog(
+            context: context,
+            builder: (_) => AlertDialog(
+                  title: Text("Something Went Wrong"),
+                  content: Text("Server Doens't Response"),
+                  elevation: 20,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      side: BorderSide(width: 0.1, color: Colors.white)),
+                ),
+            barrierDismissible: true)
+        .then((value) {
+      setState(() {
+        _registerFuture = null;
+      });
+    });
+  }
+
+  Column buildEmailPasswordWithConfirmAndRegisterButton() {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: <Widget>[
+        CircularLogoContainer(),
+        RoundedEmailTextField(
+          emailController: emailController,
+          hintText: "Your Email",
+        ),
+        RoundedPasswordTextField(
+          pwController: pwController,
+          hintText: "Password",
+        ),
+        RoundedPasswordTextField(
+          pwController: pwConfController,
+          hintText: "Confirm Password",
+        ),
+        RoundedButton(
+            child: Text("REGISTER"),
+            onTap: _registerFuture == null
+                ? () {
+                    setState(() {
+                      isAutoValidate = true;
+                      if (_formKey.currentState.validate()) {
+                        if (pwConfController.text == pwController.text) {
+                          _registerFuture = Task.makeRequest(
+                              TaskType.Register, {
+                            "username": emailController.text,
+                            "password": pwController.text
+                          });
+                        }
+                      }
+                    });
+                  }
+                : null)
+      ],
+    );
   }
 }
